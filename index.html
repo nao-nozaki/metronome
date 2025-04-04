@@ -8,26 +8,32 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 50px;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
         }
         .container {
-            max-width: 300px;
+            max-width: 400px;
             margin: auto;
             padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         input {
-            width: 100px;
+            width: 100%;
+            padding: 10px;
             margin: 10px 0;
-            padding: 5px;
+            font-size: 1rem;
+            box-sizing: border-box;
         }
         button {
-            margin: 5px;
-            padding: 10px 15px;
+            width: 48%;
+            padding: 12px;
+            font-size: 1rem;
+            margin: 5px 1%;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
         }
         .start {
@@ -38,15 +44,14 @@
             background-color: #f44336;
             color: white;
         }
-        #note-display {
+        #beat-display {
             font-size: 3rem;
-            margin-top: 20px;
-            font-weight: bold;
-            color: #333;
+            margin: 20px 0;
+            height: 3.5rem;
         }
         #pendulum {
-            width: 20px;
-            height: 80px;
+            width: 10px;
+            height: 100px;
             margin: 20px auto;
             background-color: #555;
             border-radius: 10px;
@@ -60,13 +65,13 @@
         <h1>メトロノーム</h1>
         <label for="bpm">BPM:</label>
         <input type="number" id="bpm" value="60">
-        <br>
         <label for="beatsPerMeasure">拍子（拍/小節）:</label>
         <input type="number" id="beatsPerMeasure" value="4">
-        <br>
-        <button id="start" class="start">スタート</button>
-        <button id="stop" class="stop">ストップ</button>
-        <div id="note-display">♪</div>
+        <div>
+            <button id="start" class="start">スタート</button>
+            <button id="stop" class="stop">ストップ</button>
+        </div>
+        <div id="beat-display">♪</div>
         <div id="pendulum"></div>
     </div>
 
@@ -76,50 +81,49 @@
             const stopButton = document.getElementById("stop");
             const bpmInput = document.getElementById("bpm");
             const beatsInput = document.getElementById("beatsPerMeasure");
-            const noteDisplay = document.getElementById("note-display");
+            const beatDisplay = document.getElementById("beat-display");
             const pendulum = document.getElementById("pendulum");
             let intervalId = null;
             let beatCount = 0;
-            const notes = ["C", "D", "E", "F", "G", "A", "B"];
-
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const scaleNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
             function playClick() {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
                 gain.gain.setValueAtTime(1, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.05);
             }
 
-            function updateVisuals(beat) {
+            function updateVisuals(beat, totalBeats) {
                 const angle = beat % 2 === 0 ? -30 : 30;
                 pendulum.style.transform = `rotate(${angle}deg)`;
-
-                if (beat % 6 === 0) {
-                    const randomNote = notes[Math.floor(Math.random() * notes.length)];
-                    noteDisplay.textContent = randomNote;
+                if ((beat + 1) % 6 === 0) {
+                    const note = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
+                    beatDisplay.textContent = note;
+                } else {
+                    beatDisplay.textContent = '♪';
                 }
             }
 
             function startMetronome() {
                 if (intervalId) return;
                 let bpm = parseInt(bpmInput.value, 10) || 60;
+                let beatsPerMeasure = parseInt(beatsInput.value, 10) || 4;
                 let interval = (60 / bpm) * 1000;
                 beatCount = 0;
-
+                audioCtx.resume();
                 playClick();
-                updateVisuals(beatCount);
+                updateVisuals(beatCount, beatsPerMeasure);
                 intervalId = setInterval(() => {
-                    beatCount++;
+                    beatCount = (beatCount + 1) % beatsPerMeasure;
                     playClick();
-                    updateVisuals(beatCount);
+                    updateVisuals(beatCount, beatsPerMeasure);
                 }, interval);
             }
 
@@ -127,7 +131,7 @@
                 if (intervalId) {
                     clearInterval(intervalId);
                     intervalId = null;
-                    noteDisplay.textContent = "♪";
+                    beatDisplay.textContent = "♪";
                     pendulum.style.transform = "rotate(0deg)";
                 }
             }
