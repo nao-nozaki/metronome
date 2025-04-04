@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メトロノーム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        .container {
+            max-width: 300px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        }
+        input {
+            width: 100px;
+            margin: 10px 0;
+            padding: 5px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .start {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .stop {
+            background-color: #f44336;
+            color: white;
+        }
+        #note-display {
+            font-size: 3rem;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        #pendulum {
+            width: 20px;
+            height: 80px;
+            margin: 20px auto;
+            background-color: #555;
+            border-radius: 10px;
+            transform-origin: bottom center;
+            transition: transform 0.1s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>メトロノーム</h1>
+        <label for="bpm">BPM:</label>
+        <input type="number" id="bpm" value="60">
+        <br>
+        <label for="beatsPerMeasure">拍子（拍/小節）:</label>
+        <input type="number" id="beatsPerMeasure" value="4">
+        <br>
+        <button id="start" class="start">スタート</button>
+        <button id="stop" class="stop">ストップ</button>
+        <div id="note-display">♪</div>
+        <div id="pendulum"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const startButton = document.getElementById("start");
+            const stopButton = document.getElementById("stop");
+            const bpmInput = document.getElementById("bpm");
+            const beatsInput = document.getElementById("beatsPerMeasure");
+            const noteDisplay = document.getElementById("note-display");
+            const pendulum = document.getElementById("pendulum");
+            let intervalId = null;
+            let beatCount = 0;
+            const notes = ["C", "D", "E", "F", "G", "A", "B"];
+
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            function playClick() {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                gain.gain.setValueAtTime(1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            }
+
+            function updateVisuals(beat) {
+                const angle = beat % 2 === 0 ? -30 : 30;
+                pendulum.style.transform = `rotate(${angle}deg)`;
+
+                if (beat % 6 === 0) {
+                    const randomNote = notes[Math.floor(Math.random() * notes.length)];
+                    noteDisplay.textContent = randomNote;
+                }
+            }
+
+            function startMetronome() {
+                if (intervalId) return;
+                let bpm = parseInt(bpmInput.value, 10) || 60;
+                let interval = (60 / bpm) * 1000;
+                beatCount = 0;
+
+                playClick();
+                updateVisuals(beatCount);
+                intervalId = setInterval(() => {
+                    beatCount++;
+                    playClick();
+                    updateVisuals(beatCount);
+                }, interval);
+            }
+
+            function stopMetronome() {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                    noteDisplay.textContent = "♪";
+                    pendulum.style.transform = "rotate(0deg)";
+                }
+            }
+
+            startButton.addEventListener("click", startMetronome);
+            stopButton.addEventListener("click", stopMetronome);
+        });
+    </script>
+</body>
+</html>
