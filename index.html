@@ -49,6 +49,13 @@
             margin: 20px 0;
             height: 3.5rem;
         }
+        #note-display {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #333;
+            height: 4.5rem;
+            margin-bottom: 10px;
+        }
         #pendulum {
             width: 10px;
             height: 100px;
@@ -71,6 +78,7 @@
             <button id="start" class="start">スタート</button>
             <button id="stop" class="stop">ストップ</button>
         </div>
+        <div id="note-display"></div>
         <div id="beat-display">♪</div>
         <div id="pendulum"></div>
     </div>
@@ -82,9 +90,11 @@
             const bpmInput = document.getElementById("bpm");
             const beatsInput = document.getElementById("beatsPerMeasure");
             const beatDisplay = document.getElementById("beat-display");
+            const noteDisplay = document.getElementById("note-display");
             const pendulum = document.getElementById("pendulum");
             let intervalId = null;
             let beatCount = 0;
+            let totalBeats = 0;
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const scaleNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
@@ -103,11 +113,13 @@
             function updateVisuals(beat, totalBeats) {
                 const angle = beat % 2 === 0 ? -30 : 30;
                 pendulum.style.transform = `rotate(${angle}deg)`;
-                if ((beat + 1) % 6 === 0) {
+                beatDisplay.textContent = '♪';
+
+                if (totalBeats % 6 === 0) {
                     const note = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
-                    beatDisplay.textContent = note;
+                    noteDisplay.textContent = note;
                 } else {
-                    beatDisplay.textContent = '♪';
+                    noteDisplay.textContent = '';
                 }
             }
 
@@ -117,13 +129,16 @@
                 let beatsPerMeasure = parseInt(beatsInput.value, 10) || 4;
                 let interval = (60 / bpm) * 1000;
                 beatCount = 0;
+                totalBeats = 0;
                 audioCtx.resume();
                 playClick();
-                updateVisuals(beatCount, beatsPerMeasure);
+                updateVisuals(beatCount, totalBeats);
+
                 intervalId = setInterval(() => {
                     beatCount = (beatCount + 1) % beatsPerMeasure;
+                    totalBeats++;
                     playClick();
-                    updateVisuals(beatCount, beatsPerMeasure);
+                    updateVisuals(beatCount, totalBeats);
                 }, interval);
             }
 
@@ -132,6 +147,7 @@
                     clearInterval(intervalId);
                     intervalId = null;
                     beatDisplay.textContent = "♪";
+                    noteDisplay.textContent = "";
                     pendulum.style.transform = "rotate(0deg)";
                 }
             }
@@ -142,3 +158,4 @@
     </script>
 </body>
 </html>
+
