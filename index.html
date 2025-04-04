@@ -44,11 +44,6 @@
             background-color: #f44336;
             color: white;
         }
-        #beat-display {
-            font-size: 3rem;
-            margin: 20px 0;
-            height: 3.5rem;
-        }
         #note-display {
             font-size: 4rem;
             font-weight: bold;
@@ -79,7 +74,6 @@
             <button id="stop" class="stop">ストップ</button>
         </div>
         <div id="note-display"></div>
-        <div id="beat-display">♪</div>
         <div id="pendulum"></div>
     </div>
 
@@ -89,7 +83,6 @@
             const stopButton = document.getElementById("stop");
             const bpmInput = document.getElementById("bpm");
             const beatsInput = document.getElementById("beatsPerMeasure");
-            const beatDisplay = document.getElementById("beat-display");
             const noteDisplay = document.getElementById("note-display");
             const pendulum = document.getElementById("pendulum");
             let intervalId = null;
@@ -97,6 +90,7 @@
             let totalBeats = 0;
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const scaleNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+            let currentNote = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
 
             function playClick() {
                 const osc = audioCtx.createOscillator();
@@ -113,14 +107,11 @@
             function updateVisuals(beat, totalBeats) {
                 const angle = beat % 2 === 0 ? -30 : 30;
                 pendulum.style.transform = `rotate(${angle}deg)`;
-                beatDisplay.textContent = '♪';
 
                 if (totalBeats % 6 === 0) {
-                    const note = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
-                    noteDisplay.textContent = note;
-                } else {
-                    noteDisplay.textContent = '';
+                    currentNote = scaleNotes[Math.floor(Math.random() * scaleNotes.length)];
                 }
+                noteDisplay.textContent = currentNote;
             }
 
             function startMetronome() {
@@ -146,7 +137,6 @@
                 if (intervalId) {
                     clearInterval(intervalId);
                     intervalId = null;
-                    beatDisplay.textContent = "♪";
                     noteDisplay.textContent = "";
                     pendulum.style.transform = "rotate(0deg)";
                 }
